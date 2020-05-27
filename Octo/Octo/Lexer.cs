@@ -15,16 +15,7 @@ namespace Octo
 
         public IEnumerable<string> Diagnostics => _diagnostics;
 
-        private char Current
-        {
-            get
-            {
-                if (_position >= _text.Length)
-                    return '\0';
-
-                return _text[_position];
-            }
-        }
+        private char Current => _position >= _text.Length ? '\0' : _text[_position];
 
         private void Next()
         {
