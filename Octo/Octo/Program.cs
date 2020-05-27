@@ -22,7 +22,13 @@ namespace Octo
                 PrettyPrint(syntaxTree.Root);
                 Console.ForegroundColor = color;
 
-                if (syntaxTree.Diagnostics.Any())
+                if (!syntaxTree.Diagnostics.Any())
+                {
+                    var evaluator = new Evaluator(syntaxTree.Root);
+                    var result = evaluator.Evaluate();
+                    Console.WriteLine(result);
+                }
+                else
                 {
                     Console.ForegroundColor = ConsoleColor.DarkRed;
                     foreach (var diagnostic in syntaxTree.Diagnostics)
@@ -138,7 +144,9 @@ namespace Octo
 
                 var length = _position - start;
                 var text = _text.Substring(start, length);
-                int.TryParse(text, out var value);
+                if (!int.TryParse(text, out var value))
+                    _diagnostics.Add($"[ERROR] the number {text} isn't valid Int32");
+                
                 return new SyntaxToken(SyntaxKind.NumberToken, start, text, value);
             }
 
@@ -316,6 +324,44 @@ namespace Octo
         {
             var numberToken = Match(SyntaxKind.NumberToken);
             return new NumberExpressionSyntax(numberToken);
+        }
+    }
+
+    class Evaluator
+    {
+        private readonly ExpressionSyntax _root;
+
+        public Evaluator(ExpressionSyntax root)
+        {
+            this._root = root;
+        }
+
+        public int Evaluate()
+        {
+            return EvaluateExpression(_root);
+        }
+
+        private int EvaluateExpression(ExpressionSyntax node)
+        {
+            if (node is NumberExpressionSyntax numberExpression)
+                return (int) numberExpression.NumberToken.Value;
+            if (node is BinaryExpressionSyntax binaryExpression)
+            {
+                var left = EvaluateExpression(binaryExpression.Left);
+                var right = EvaluateExpression(binaryExpression.Right);
+
+                if (binaryExpression.OperatorToken.Kind == SyntaxKind.PlusToken)
+                    return left + right;
+                else if (binaryExpression.OperatorToken.Kind == SyntaxKind.MinusToken)
+                    return left - right;
+                else if(binaryExpression.OperatorToken.Kind == SyntaxKind.StarToken)
+                    return left * right;
+                else if (binaryExpression.OperatorToken.Kind == SyntaxKind.SlashToken)
+                    return left / right;
+                else
+                    throw new Exception($"Unexpected binary operator {binaryExpression.Kind}");
+            }
+            throw new Exception($"Unexpected node {node.Kind}");
         }
     }
 }
