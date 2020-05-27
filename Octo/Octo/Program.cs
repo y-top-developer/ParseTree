@@ -359,7 +359,7 @@ namespace Octo
         {
             var expression = ParseTerm();
             var endOfFileToken = Match(SyntaxKind.EndOfFileToken);
-            return new SyntaxTree(_diagnostics, expresion, endOfFileToken);
+            return new SyntaxTree(_diagnostics, expression, endOfFileToken);
         }
 
         private ExpressionSyntax ParseTerm()
