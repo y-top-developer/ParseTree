@@ -8,19 +8,35 @@ namespace Octo
     {
         public static void Main(string[] args)
         {
+            bool showTree = false;
             while (true)
             {
                 Console.Write("> ");
                 var line = Console.ReadLine();
                 if (string.IsNullOrEmpty(line))
                     return;
-                var parser = new Parser(line);
-                var syntaxTree = parser.Parse();
+
+                if (line == "#showTree")
+                {
+                    showTree = !showTree;
+                    Console.WriteLine(showTree ? "Showing parse trees" : "Not showing parse tree");
+                    continue;
+                }
+                else if (line == "#clear")
+                {
+                    Console.Clear();
+                    continue;
+                }
+
+                var syntaxTree = SyntaxTree.Parse(line);
 
                 var color = Console.ForegroundColor;
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                PrettyPrint(syntaxTree.Root);
-                Console.ForegroundColor = color;
+                if (showTree)
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    PrettyPrint(syntaxTree.Root);
+                    Console.ForegroundColor = color;
+                }
 
                 if (!syntaxTree.Diagnostics.Any())
                 {
@@ -37,6 +53,7 @@ namespace Octo
                 }
             }
         }
+
         static void PrettyPrint(SyntaxNode node, string indent = "", bool isLast = true)
         {
             var marker = isLast ? "└──" : "├──";
@@ -77,7 +94,8 @@ namespace Octo
         WhiteSpaceToken,
         NumberToken,
         NumberExpression,
-        BinaryExpression
+        BinaryExpression,
+        ParenthesizedExpression
     }
 
     class SyntaxToken : SyntaxNode
@@ -91,6 +109,7 @@ namespace Octo
         }
 
         public override SyntaxKind Kind { get; }
+
         public override IEnumerable<SyntaxNode> GetChildren()
         {
             return Enumerable.Empty<SyntaxNode>();
@@ -146,7 +165,7 @@ namespace Octo
                 var text = _text.Substring(start, length);
                 if (!int.TryParse(text, out var value))
                     _diagnostics.Add($"[ERROR] the number {text} isn't valid Int32");
-                
+
                 return new SyntaxToken(SyntaxKind.NumberToken, start, text, value);
             }
 
@@ -189,7 +208,6 @@ namespace Octo
 
     abstract class ExpressionSyntax : SyntaxNode
     {
-
     }
 
     sealed class NumberExpressionSyntax : ExpressionSyntax
@@ -202,6 +220,7 @@ namespace Octo
         }
 
         public override SyntaxKind Kind => SyntaxKind.NumberExpression;
+
         public override IEnumerable<SyntaxNode> GetChildren()
         {
             yield return NumberToken;
@@ -231,6 +250,28 @@ namespace Octo
         }
     }
 
+    sealed class ParenthesizedExpressionSyntax : ExpressionSyntax
+    {
+        public SyntaxToken OpenParenthesizedToken { get; }
+        public ExpressionSyntax Expression { get; }
+        public SyntaxToken ClosedParenthesizedToken { get; }
+
+        public ParenthesizedExpressionSyntax(SyntaxToken openParenthesizedToken, ExpressionSyntax expression, SyntaxToken closedParenthesizedToken)
+        {
+            OpenParenthesizedToken = openParenthesizedToken;
+            Expression = expression;
+            ClosedParenthesizedToken = closedParenthesizedToken;
+        }
+
+        public override SyntaxKind Kind => SyntaxKind.ParenthesizedExpression;
+        public override IEnumerable<SyntaxNode> GetChildren()
+        {
+            yield return OpenParenthesizedToken;
+            yield return Expression;
+            yield return ClosedParenthesizedToken;
+        }
+    }
+
     sealed class SyntaxTree
     {
         public IReadOnlyList<string> Diagnostics { get; }
@@ -243,6 +284,12 @@ namespace Octo
             Root = root;
             EndOfFileToken = endOfFileToken;
         }
+
+        public static SyntaxTree Parse(string text)
+        {
+            var parser = new Parser(text);
+            return parser.Parse();
+        }
     }
 
     class Parser
@@ -250,6 +297,7 @@ namespace Octo
         private SyntaxToken[] _tokens;
         private int _position;
         private List<string> _diagnostics = new List<string>();
+
         public Parser(string text)
         {
             var tokens = new List<SyntaxToken>();
@@ -299,16 +347,21 @@ namespace Octo
             return new SyntaxToken(kind, Current.Position, null, null);
         }
 
+        private ExpressionSyntax ParseExpression()
+        {
+            return ParseTerm();
+        }
+
         public SyntaxTree Parse()
         {
-            var expression= ParseExpression();
+            var expression = ParseExpression();
             var endOfFileToken = Match(SyntaxKind.EndOfFileToken);
             return new SyntaxTree(_diagnostics, expression, endOfFileToken);
         }
 
-        private ExpressionSyntax ParseExpression()
+        private ExpressionSyntax ParseTerm()
         {
-            var left = ParsePrimaryExpression();
+            var left = ParseFactor();
 
             while (Current.Kind == SyntaxKind.PlusToken || Current.Kind == SyntaxKind.MinusToken)
             {
@@ -320,8 +373,30 @@ namespace Octo
             return left;
         }
 
+        private ExpressionSyntax ParseFactor()
+        {
+            var left = ParsePrimaryExpression();
+
+            while (Current.Kind == SyntaxKind.StarToken || Current.Kind == SyntaxKind.SlashToken)
+            {
+                var operatorToken = NextToken();
+                var right = ParsePrimaryExpression();
+                left = new BinaryExpressionSyntax(left, operatorToken, right);
+            }
+
+            return left;
+        }
+
         private ExpressionSyntax ParsePrimaryExpression()
         {
+            if (Current.Kind == SyntaxKind.OpenParenthesisToken)
+            {
+                var left = NextToken();
+                var expression = ParseExpression();
+                var right = Match(SyntaxKind.CloseParenthesisToken);
+                return  new ParenthesizedExpressionSyntax(left, expression, right);
+            }
+
             var numberToken = Match(SyntaxKind.NumberToken);
             return new NumberExpressionSyntax(numberToken);
         }
@@ -354,13 +429,17 @@ namespace Octo
                     return left + right;
                 else if (binaryExpression.OperatorToken.Kind == SyntaxKind.MinusToken)
                     return left - right;
-                else if(binaryExpression.OperatorToken.Kind == SyntaxKind.StarToken)
+                else if (binaryExpression.OperatorToken.Kind == SyntaxKind.StarToken)
                     return left * right;
                 else if (binaryExpression.OperatorToken.Kind == SyntaxKind.SlashToken)
                     return left / right;
                 else
                     throw new Exception($"Unexpected binary operator {binaryExpression.Kind}");
             }
+
+            if (node is ParenthesizedExpressionSyntax parenthesized)
+                return EvaluateExpression(parenthesized.Expression);
+
             throw new Exception($"Unexpected node {node.Kind}");
         }
     }
