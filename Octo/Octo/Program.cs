@@ -256,7 +256,8 @@ namespace Octo
         public ExpressionSyntax Expression { get; }
         public SyntaxToken ClosedParenthesizedToken { get; }
 
-        public ParenthesizedExpressionSyntax(SyntaxToken openParenthesizedToken, ExpressionSyntax expression, SyntaxToken closedParenthesizedToken)
+        public ParenthesizedExpressionSyntax(SyntaxToken openParenthesizedToken, ExpressionSyntax expression,
+            SyntaxToken closedParenthesizedToken)
         {
             OpenParenthesizedToken = openParenthesizedToken;
             Expression = expression;
@@ -264,6 +265,7 @@ namespace Octo
         }
 
         public override SyntaxKind Kind => SyntaxKind.ParenthesizedExpression;
+
         public override IEnumerable<SyntaxNode> GetChildren()
         {
             yield return OpenParenthesizedToken;
@@ -294,9 +296,10 @@ namespace Octo
 
     class Parser
     {
-        private SyntaxToken[] _tokens;
-        private int _position;
+        private readonly SyntaxToken[] _tokens;
+
         private List<string> _diagnostics = new List<string>();
+        private int _position;
 
         public Parser(string text)
         {
@@ -354,9 +357,9 @@ namespace Octo
 
         public SyntaxTree Parse()
         {
-            var expression = ParseExpression();
+            var expression = ParseTerm();
             var endOfFileToken = Match(SyntaxKind.EndOfFileToken);
-            return new SyntaxTree(_diagnostics, expression, endOfFileToken);
+            return new SyntaxTree(_diagnostics, expresion, endOfFileToken);
         }
 
         private ExpressionSyntax ParseTerm()
@@ -366,7 +369,7 @@ namespace Octo
             while (Current.Kind == SyntaxKind.PlusToken || Current.Kind == SyntaxKind.MinusToken)
             {
                 var operatorToken = NextToken();
-                var right = ParsePrimaryExpression();
+                var right = ParseFactor();
                 left = new BinaryExpressionSyntax(left, operatorToken, right);
             }
 
@@ -394,7 +397,7 @@ namespace Octo
                 var left = NextToken();
                 var expression = ParseExpression();
                 var right = Match(SyntaxKind.CloseParenthesisToken);
-                return  new ParenthesizedExpressionSyntax(left, expression, right);
+                return new ParenthesizedExpressionSyntax(left, expression, right);
             }
 
             var numberToken = Match(SyntaxKind.NumberToken);
