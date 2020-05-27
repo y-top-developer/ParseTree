@@ -19,22 +19,18 @@ namespace Octo
 
                 var color = Console.ForegroundColor;
                 Console.ForegroundColor = ConsoleColor.DarkGray;
-
                 PrettyPrint(expression);
-
                 Console.ForegroundColor = color;
+
+                if (parser.Diagnostics.Any())
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
+                    foreach (var diagnostic in parser.Diagnostics)
+                        Console.WriteLine(diagnostic);
+                    Console.ForegroundColor = color;
+                }
             }
         }
-
-        /*
-        ├── a-first.html
-        ├── b-second.html
-        ├── subfolder
-        │   ├── readme.html
-        │   ├── code.cpp
-        │   └── code.h
-        └── z-last-file.html*/
-
         static void PrettyPrint(SyntaxNode node, string indent = "", bool isLast = true)
         {
             var marker = isLast ? "└──" : "├──";
@@ -103,11 +99,14 @@ namespace Octo
     {
         private readonly string _text;
         private int _position;
+        private List<string> _diagnostics = new List<string>();
 
         public Lexer(string text)
         {
             this._text = text;
         }
+
+        public IEnumerable<string> Diagnostics => _diagnostics;
 
         private char Current
         {
@@ -168,6 +167,7 @@ namespace Octo
             else if (Current == ')')
                 return new SyntaxToken(SyntaxKind.CloseParenthesisToken, _position++, ")", null);
 
+            _diagnostics.Add($"[ERROR] bad character input: '{Current}'");
             return new SyntaxToken(SyntaxKind.BadToken, _position++, _text.Substring(_position - 1, 1), null);
         }
     }
@@ -227,7 +227,7 @@ namespace Octo
     {
         private SyntaxToken[] _tokens;
         private int _position;
-
+        private List<string> _diagnostics = new List<string>();
         public Parser(string text)
         {
             var tokens = new List<SyntaxToken>();
@@ -245,7 +245,10 @@ namespace Octo
             } while (token.Kind != SyntaxKind.EndOfFileToken);
 
             _tokens = tokens.ToArray();
+            _diagnostics.AddRange(lexer.Diagnostics);
         }
+
+        public IEnumerable<string> Diagnostics => _diagnostics;
 
         private SyntaxToken Peek(int offset)
         {
@@ -270,6 +273,7 @@ namespace Octo
             if (Current.Kind == kind)
                 return NextToken();
 
+            _diagnostics.Add($"[ERROR] unexpected token <{Current.Kind}>, expected <{kind}>");
             return new SyntaxToken(kind, Current.Position, null, null);
         }
 
