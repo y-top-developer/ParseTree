@@ -8,7 +8,6 @@ namespace Octo
     {
         public static void Main()
         {
-            var showTree = false;
             while (true)
             {
                 Console.Write("> ");
@@ -18,10 +17,6 @@ namespace Octo
 
                 switch (line)
                 {
-                    case "#showTree":
-                        showTree = !showTree;
-                        Console.WriteLine(showTree ? "Showing parse trees" : "Not showing parse tree");
-                        continue;
                     case "#clear":
                         Console.Clear();
                         continue;
@@ -29,12 +24,10 @@ namespace Octo
 
                 var syntaxTree = SyntaxTree.Parse(line);
 
-                if (showTree)
-                {
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    PrettyPrint(syntaxTree.Root);
-                    Console.ResetColor();
-                }
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                PrettyPrint(syntaxTree.Root);
+                Console.ResetColor();
+                
 
                 if (!syntaxTree.Diagnostics.Any())
                 {
