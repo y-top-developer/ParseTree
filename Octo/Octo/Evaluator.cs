@@ -22,7 +22,7 @@ namespace Octo
             {
                 switch (node)
                 {
-                    case NumberExpressionSyntax numberExpression:
+                    case LiteralExpressionSyntax numberExpression:
                         return (int) numberExpression.NumberToken.Value;
                     case BinaryExpressionSyntax binaryExpression:
                     {

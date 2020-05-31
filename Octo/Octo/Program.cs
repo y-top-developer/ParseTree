@@ -5,7 +5,7 @@ namespace Octo
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static void Main()
         {
             var showTree = false;
             while (true)
@@ -28,12 +28,11 @@ namespace Octo
 
                 var syntaxTree = SyntaxTree.Parse(line);
 
-                var color = Console.ForegroundColor;
                 if (showTree)
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGray;
                     PrettyPrint(syntaxTree.Root);
-                    Console.ForegroundColor = color;
+                    Console.ResetColor();
                 }
 
                 if (!syntaxTree.Diagnostics.Any())
@@ -47,7 +46,7 @@ namespace Octo
                     Console.ForegroundColor = ConsoleColor.DarkRed;
                     foreach (var diagnostic in syntaxTree.Diagnostics)
                         Console.WriteLine(diagnostic);
-                    Console.ForegroundColor = color;
+                    Console.ResetColor();
                 }
             }
         }
