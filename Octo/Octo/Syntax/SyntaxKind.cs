@@ -1,4 +1,4 @@
-﻿namespace Octo
+﻿namespace Octo.Syntax
 {
     internal enum SyntaxKind
     {

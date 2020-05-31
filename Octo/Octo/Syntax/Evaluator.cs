@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Octo
+namespace Octo.Syntax
 {
     internal class Evaluator
     {

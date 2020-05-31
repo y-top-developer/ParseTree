@@ -1,4 +1,4 @@
-﻿namespace Octo
+﻿namespace Octo.Syntax
 {
     internal static class SyntaxFacts
     {
