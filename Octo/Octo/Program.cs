@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Linq;
-using Octo.Syntax;
+using ParseTree.Syntax;
 
-namespace Octo
+namespace ParseTree
 {
     public class Program
     {

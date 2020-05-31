@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Octo.Syntax
+namespace ParseTree.Syntax
 {
     internal abstract class SyntaxNode
     {

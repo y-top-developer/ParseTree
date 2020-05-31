@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Octo.Syntax
+namespace ParseTree.Syntax
 {
     internal sealed class SyntaxTree
     {

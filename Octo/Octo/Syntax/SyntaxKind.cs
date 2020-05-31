@@ -1,4 +1,4 @@
-﻿namespace Octo.Syntax
+﻿namespace ParseTree.Syntax
 {
     internal enum SyntaxKind
     {

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Microsoft.VisualBasic;
 
-namespace Octo.Syntax
+namespace ParseTree.Syntax
 {
     internal class Parser
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Octo.Syntax
+namespace ParseTree.Syntax
 {
     internal class Evaluator
     {
