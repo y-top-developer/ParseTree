@@ -1,4 +1,4 @@
-﻿namespace Octo
+﻿namespace Octo.Syntax
 {
     internal enum SyntaxKind
     {
@@ -12,8 +12,10 @@
         PlusToken,
         WhiteSpaceToken,
         NumberToken,
-        NumberExpression,
+
+        LiteralExpression,
         BinaryExpression,
-        ParenthesizedExpression
+        ParenthesizedExpression,
+        UnaryExpression
     }
 }

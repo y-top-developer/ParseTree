@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Octo
+namespace Octo.Syntax
 {
     internal abstract class SyntaxNode
     {
