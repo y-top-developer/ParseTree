@@ -22,8 +22,19 @@ namespace Octo
             {
                 switch (node)
                 {
-                    case LiteralExpressionSyntax numberExpression:
-                        return (int) numberExpression.NumberToken.Value;
+                    case LiteralExpressionSyntax literalExpression:
+                        return (int)literalExpression.LiteralToken.Value;
+                    case UnaryExpressionSyntax unaryExpression:
+                    {
+                        var operand = EvaluateExpression(unaryExpression.Operand);
+
+                        return unaryExpression.OperatorToken.Kind switch
+                        {
+                            SyntaxKind.PlusToken => operand,
+                            SyntaxKind.MinusToken => -operand,
+                            _ => throw new Exception($"Unexpected binary operator {unaryExpression.OperatorToken.Kind}")
+                        };
+                    }
                     case BinaryExpressionSyntax binaryExpression:
                     {
                         var left = EvaluateExpression(binaryExpression.Left);

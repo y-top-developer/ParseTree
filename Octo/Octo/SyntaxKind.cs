@@ -12,8 +12,10 @@
         PlusToken,
         WhiteSpaceToken,
         NumberToken,
+
         LiteralExpression,
         BinaryExpression,
-        ParenthesizedExpression
+        ParenthesizedExpression,
+        UnaryExpression
     }
 }
